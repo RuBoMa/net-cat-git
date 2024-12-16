@@ -1,0 +1,5 @@
+Run the server normally with go run .
+
+Connect to it from other terminals with netcat, like so:
+nc localhost 8989
+(or whatever the ip address is and which port was specified)

@@ -1,0 +1,11 @@
+2024/12/16 14:13:38 [START] [Server]: Server started on port 8989
+2024/12/16 14:14:09 [CONNECT] [::1]: Client "Roope" joined
+2024/12/16 14:14:09 [MSG_HISTORY] [::1]: Message history sent to client "Roope"
+2024/12/16 14:14:20 [CONNECT] [::1]: Client "antero" joined
+2024/12/16 14:14:20 [MSG_HISTORY] [::1]: Message history sent to client "antero"
+2024/12/16 14:14:22 [MESSAGE] [antero]: moro
+2024/12/16 14:14:27 [MESSAGE] [Roope]: moro moro
+2024/12/16 14:14:34 [DISCONNECT] [::1]: "Roope" disconnected (client terminated)
+2024/12/16 14:14:36 [DISCONNECT] [::1]: "antero" left the chat
+2024/12/16 14:14:39 [SHUTDOWN] [Server]: Server shutting down
+2024/12/16 14:14:39 [SHUTDOWN] [Server]: Shut down complete
