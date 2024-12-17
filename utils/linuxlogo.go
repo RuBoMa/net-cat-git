@@ -9,7 +9,7 @@ import (
 func linuxLogo() string {
 	bytes, err := os.ReadFile("linuxlogo.txt")
 	if err != nil {
-		fmt.Println("Error:", err.Error())
+		fmt.Println("Error:", err)
 		os.Exit(1)
 	}
 	return string(bytes)

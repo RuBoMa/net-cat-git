@@ -1,10 +1,8 @@
 package utils
 
 import (
-	"TCPChat/logging"
 	"bufio"
 	"fmt"
-	"log"
 	"net"
 	"sync"
 )
@@ -31,7 +29,7 @@ func clientNameExists(name string) bool {
 	return false
 }
 
-func getClientName(address *string, reader *bufio.Reader, writer *bufio.Writer) (*Client, string, bool) {
+func getClientName(reader *bufio.Reader, writer *bufio.Writer) (*Client, string, bool) {
 	var client *Client
 	var name string
 	open := true
@@ -41,13 +39,11 @@ func getClientName(address *string, reader *bufio.Reader, writer *bufio.Writer) 
 		name, err = reader.ReadString('\n')
 		name = cleanMessage(name)
 		if err != nil {
-			logging.LogEvent("INVALID_NAME", *address, "Error reading name request: "+err.Error())
 			open = false
 			break
 		}
 
 		if name == "" {
-			logging.LogEvent("INVALID_NAME", *address, "Invalid new name request: "+`""`)
 			WriteToClient("Invalid name.\r\n[ENTER YOUR NAME]: ", writer, false)
 			writer.Flush()
 		}
@@ -59,7 +55,6 @@ func getClientName(address *string, reader *bufio.Reader, writer *bufio.Writer) 
 			WriteToClient("Name already taken.\r\n[ENTER YOUR NAME]: ", writer, false)
 			writer.Flush()
 			clientMutex.Unlock()
-			logging.LogEvent("NAME_TAKEN", *address, "Taken name requested: "+`"`+name+`"`)
 			continue
 		}
 
@@ -67,7 +62,6 @@ func getClientName(address *string, reader *bufio.Reader, writer *bufio.Writer) 
 			WriteToClient("Chat room is full. Connection closed.", writer, true)
 			writer.Flush()
 			clientMutex.Unlock()
-			logging.LogEvent("ROOM_FULL", *address, "Chat room full, connection closed")
 			open = false
 			return nil, "", false
 		}
@@ -90,13 +84,6 @@ func HandleClient(conn net.Conn, shutdown chan struct{}, wg *sync.WaitGroup) {
 	WriteToClient(linuxLogo()+"\r\n[ENTER YOUR NAME]: ", writer, false)
 	writer.Flush()
 
-	// Use client's IP address in logs
-	address, _, err := net.SplitHostPort(conn.RemoteAddr().String())
-	if err != nil {
-		log.Printf("Failed to parse client address: %v", err)
-		return
-	}
-
 	// exit at close of shutdown
 	go func() {
 		<-shutdown
@@ -104,14 +91,13 @@ func HandleClient(conn net.Conn, shutdown chan struct{}, wg *sync.WaitGroup) {
 		conn.Close()
 	}()
 
-	client, name, open := getClientName(&address, reader, writer)
+	client, name, open := getClientName(reader, writer)
 
 	// Proceed normally if connection didn't close while getting name
 	if open {
-		logging.LogEvent("CONNECT", address, "Client "+`"`+name+`"`+" joined")
-		sendHistory(writer, address, name)
+		sendHistory(writer)
 		broadcast(name + " has joined the chat...")
-		listenForMessages(client, name, address, reader, writer)
+		listenForMessages(client, name, reader, writer)
 	}
 
 	// Handle client disconnection

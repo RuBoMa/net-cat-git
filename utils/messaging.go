@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"TCPChat/logging"
 	"bufio"
 	"errors"
 	"fmt"
@@ -32,26 +31,22 @@ func BroadcastMessages() {
 }
 
 // sendHistory sends all the previous messages to a clients writer
-func sendHistory(writer *bufio.Writer, address, name string) {
+func sendHistory(writer *bufio.Writer) {
 	messageMutex.RLock()
 	for _, msg := range messages {
 		WriteToClient(msg, writer, true)
 	}
 	messageMutex.RUnlock()
 	writer.Flush()
-	logging.LogEvent("MSG_HISTORY", address, "Message history sent to client "+`"`+name+`"`)
 }
 
-func listenForMessages(client *Client, name, address string, reader *bufio.Reader, writer *bufio.Writer) {
+func listenForMessages(client *Client, name string, reader *bufio.Reader, writer *bufio.Writer) {
 	// Listen for messages
 	for {
 		msg, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Println("Client "+`"`+name+`"`+" exiting?", err.Error())
+			fmt.Println("Client "+`"`+name+`"`+" exiting?", err)
 			if errors.Is(err, io.EOF) {
-				logging.LogEvent("DISCONNECT", address, `"`+name+`"`+" disconnected (client terminated)")
-			} else {
-				logging.LogEvent("DISCONNECT", address, `"`+name+`"`+" disconnected")
 			}
 			break
 		}
@@ -60,7 +55,6 @@ func listenForMessages(client *Client, name, address string, reader *bufio.Reade
 		msg = cleanMessage(msg)
 
 		if msg == "" {
-			logging.LogEvent("NOT_SENT", address, "Empty message from "+`"`+name+`"`+" not sent")
 			continue
 		}
 
@@ -69,17 +63,14 @@ func listenForMessages(client *Client, name, address string, reader *bufio.Reade
 			if newName == "" || clientNameExists(newName) {
 				if newName == "" {
 					WriteToClient("Invalid new name. Name not changed.", writer, true)
-					logging.LogEvent("INVALID_NAME", address, "Invalid new name request: "+`"`+newName+`"`+" from "+`"`+name+`"`)
 				} else {
 					WriteToClient("Name already taken. Name not changed.", writer, true)
-					logging.LogEvent("NAME_TAKEN", address, "Taken name change requested: "+`"`+newName+`"`+" by "+`"`+name+`"`)
 				}
 				writer.Flush()
 				continue
 			}
 
 			broadcast(fmt.Sprintf("%s has changed their name to %s", name, newName))
-			logging.LogEvent("NEW_NAME", address, `"`+name+`"`+" changed their name to "+`"`+newName+`"`)
 			name = newName
 			clientMutex.Lock()
 			client.Name = newName
@@ -91,13 +82,11 @@ func listenForMessages(client *Client, name, address string, reader *bufio.Reade
 			fmt.Println("Client exiting")
 			WriteToClient("Exiting chat room.", writer, true)
 			writer.Flush()
-			logging.LogEvent("DISCONNECT", address, `"`+name+`"`+" left the chat")
 			break
 		}
 
 		timestamp := time.Now().Format("2006-01-02 15:04:05")
 		formattedMsg := fmt.Sprintf("[%s][%s]: %s", timestamp, name, msg)
-		logging.LogEvent("MESSAGE", name, msg)
 		broadcast(formattedMsg)
 	}
 }
