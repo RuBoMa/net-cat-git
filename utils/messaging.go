@@ -2,9 +2,7 @@ package utils
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
-	"io"
 	"strings"
 	"time"
 )
@@ -25,8 +23,6 @@ func listenForMessages(client *Client, name string, reader *bufio.Reader, writer
 		msg, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Println("Client "+`"`+name+`"`+" exiting?", err)
-			if errors.Is(err, io.EOF) {
-			}
 			break
 		}
 
@@ -46,7 +42,6 @@ func listenForMessages(client *Client, name string, reader *bufio.Reader, writer
 					WriteToClient("Name already taken. Name not changed.", writer, true)
 				}
 				writer.Flush()
-				continue
 			}
 
 			broadcast(fmt.Sprintf("%s has changed their name to %s", name, newName))
