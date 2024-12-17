@@ -1,53 +1,62 @@
-# NetCat
-
-Something much like the original NetCat, a TCP group chat.
-
-TCPChat is a simple, server-client chat application inspired by NetCat. It allows multiple clients to connect to a TCP server and exchange messages in real-time. It includes name assignment, connection controls, and message logging—all while adhering to good coding practices in Go.
+# Net-Cat
+Description
+This project is a recreation of the NetCat tool in a Server-Client architecture. The program allows for real-time group chat functionality over a TCP connection. It can run in server mode, listening for connections, or in client mode, connecting to the server and transmitting messages.
 
 # Features
+The project implements a group chat with the following capabilities:
 
-TCP Server: Accepts up to 10 client connections on a specified port (default 8989).
+TCP Connection
 
-User Naming: Clients are prompted to choose a unique name. If they wish to change name they can type "name=" followed by their new name of choice.
+A server can manage multiple clients (1-to-many relationship).
 
-Broadcast Messaging: All messages are time-stamped and sent to every connected client.
+Name Requirement
+Clients must provide a name when connecting.
 
-Message History: New clients receive the full chat history upon joining.
+Clients can send messages to the group chat.
+Empty messages are ignored.
+Each message includes a timestamp and the sender’s name.
+Example format:
 
-Join/Leave Notifications: The group is informed when clients connect or disconnect.
+[2024-06-17 12:45:00][Alice]: Hello, world!
 
-Graceful Shutdown: Server can be stopped gracefully, notifying all clients.
+New clients receive all previous chat messages upon joining.
+Join/Exit Notifications
 
-Logging: Events and messages are logged to a file.
+When a client joins, all other clients are notified.
+When a client leaves, the group is informed, but the chat continues without disconnection.
+Default Port Handling
 
-# Start the server with default port 8989
+If no port is specified, the server listens on port 8989.
 
-To start the server with the default port, run the command "go run ." in the terminal while in the folder that contains "netcat.go"
+Usage message when no port is provided:
+[USAGE]: ./TCPChat $port
+Connection Management
 
-# Start the server on a custom port
+Supports up to 10 simultaneous client connections.
+Proper error handling for both server and client sides.
 
-To start the server with a custom port, run the command "go run ." followed by your port number of choice in the terminal while in the folder that contains "netcat.go"
+Clients can disconnect and reconnect without disrupting the server or other clients.
 
-For instance: 
-go run . 2525
+# Instructions
+Prerequisites
+Go installed on your system.
 
-# Connect a client using netcat
+# Run the server
 
-Use the command: 
-nc -host -port
+Start the server on specified port: go run . $port
 
-For instance:
-nc localhost 8989
+if no port is specified, then default 8989 is used: go run .
 
-When a client connects, a Linux logo is displayed, and the user is prompted for a name. Once named, the client can send and receive messages from all other users connected to the server. To exit, simply type exit or quit.
+# Run the client
 
-# Requirements
+nc localhost $port
 
-Go (golang)
+# Implementation Notes
+Written in Go.
+Uses goroutines for concurrent client handling.
+Utilizes channels and mutexes for synchronization.
+Follows Go best practices for code structure and error handling.
 
-nc (netcat) 
-or telnet
+# Authors
 
-# Additional Notes
-
-This project is a simplified re-creation of NetCat’s chat features, focusing on TCP communication, concurrency, and proper synchronization (using goroutines, channels, and mutexes). It also demonstrates error handling and logging best practices.
+Roope & Toft
