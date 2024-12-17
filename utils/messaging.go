@@ -9,11 +9,6 @@ import (
 	"time"
 )
 
-// broadcast sends the string to the messageBuffer channel
-func broadcast(msg string) {
-	messageBuffer <- msg
-}
-
 // broadcastMessages stores and sends messages to all clients from the message buffer
 func BroadcastMessages() {
 	for msg := range messageBuffer { // messageBuffer is a channel so for loop doesn't exit
@@ -28,6 +23,11 @@ func BroadcastMessages() {
 		}
 		clientMutex.Unlock()
 	}
+}
+
+// broadcast sends the string to the messageBuffer channel
+func broadcast(msg string) {
+	messageBuffer <- msg
 }
 
 // sendHistory sends all the previous messages to a clients writer

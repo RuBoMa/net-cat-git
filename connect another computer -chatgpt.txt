@@ -26,7 +26,7 @@ To connect to your simplified NetCat-like server from another computer, follow t
 4. Connect from another computer
 	• On the same network:
 		▪ Use the private IP address of the server:
-			nc <server-private-ip> 8989 		  Example:
+			nc <server-private-ip> 8989		  Example:
 			nc 192.168.1.5 8989
 		
 	• From outside the network:
@@ -51,4 +51,3 @@ To connect to your simplified NetCat-like server from another computer, follow t
 	• Avoid running this on unrestricted networks as it might expose the service to 
 	  unwanted connections.
 
-Let me know if you need help with any specific part!
