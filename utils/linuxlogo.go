@@ -6,7 +6,7 @@ import (
 )
 
 // linuxLogo returns the content of the text file linuxlogo.txt
-func linuxLogo() string {
+func LinuxLogo() string {
 	bytes, err := os.ReadFile("linuxlogo.txt")
 	if err != nil {
 		fmt.Println("Error:", err)

@@ -4,23 +4,51 @@ import (
 	"bufio"
 	"fmt"
 	"net"
-	"sync"
+	"strings"
 )
 
 type Client struct {
 	Name   string
+	Conn   net.Conn
 	Writer *bufio.Writer
 }
 
-var (
-	messageBuffer = make(chan string, 10)
-	messageMutex  sync.RWMutex
-	clientMutex   sync.Mutex
-	messages      []string
-	clients       = make(map[*Client]bool)
-)
+func getClientName(reader *bufio.Reader, writer *bufio.Writer, conn net.Conn) (*Client, error) {
+	var name string
+	for {
+		writer.WriteString(LinuxLogo() + "\n[ENTER YOUR NAME:] ")
+		writer.Flush()
 
-func clientNameExists(name string) bool {
+		nameInput, err := reader.ReadString('\n')
+		if err != nil {
+			return nil, err
+		}
+		name = strings.TrimSpace(nameInput)
+		if name == "" {
+			writer.WriteString("Name cannot be empty.\n")
+			writer.Flush()
+			continue
+		}
+		clientMutex.Lock()
+		if isNameTaken(name) {
+			clientMutex.Unlock()
+			writer.WriteString("Name is already taken. Try another.\n")
+			writer.Flush()
+			continue
+		}
+		clientMutex.Unlock()
+		break
+	}
+
+	client := &Client{Name: name, Conn: conn, Writer: writer}
+	clientMutex.Lock()
+	clients[client] = true
+	clientMutex.Unlock()
+
+	return client, nil
+}
+
+func isNameTaken(name string) bool {
 	for client := range clients {
 		if client.Name == name {
 			return true
@@ -28,82 +56,14 @@ func clientNameExists(name string) bool {
 	}
 	return false
 }
+func HandleNameChange(client *Client, newName string) {
 
-func getClientName(reader *bufio.Reader, writer *bufio.Writer) (*Client, string, bool) {
-	var client *Client
-	var name string
-	open := true
-	for {
-		// Get proposed name
-		var err error
-		name, err = reader.ReadString('\n')
-		name = cleanMessage(name)
-		if err != nil {
-			open = false
-			break
-		}
-
-		if name == "" {
-			WriteToClient("Invalid name.\r\n[ENTER YOUR NAME]: ", writer, false)
-			writer.Flush()
-		}
-
-		// Add client to the map if possible
-		clientMutex.Lock()
-
-		if clientNameExists(name) {
-			WriteToClient("Name already taken.\r\n[ENTER YOUR NAME]: ", writer, false)
-			writer.Flush()
-			clientMutex.Unlock()
-			continue
-		}
-
-		if len(clients) >= 10 {
-			WriteToClient("Chat room is full. Connection closed.", writer, true)
-			writer.Flush()
-			clientMutex.Unlock()
-			open = false
-			return nil, "", false
-		}
-
-		client = &Client{name, writer}
-		clients[client] = true
-		clientMutex.Unlock()
-		break
+	if isNameTaken(newName) {
+		client.Writer.WriteString("Name is already taken. Try another.\n")
+		client.Writer.Flush()
+		return
 	}
-	return client, name, open
-}
-
-func HandleClient(conn net.Conn, shutdown chan struct{}, wg *sync.WaitGroup) {
-	defer conn.Close()
-	writer := bufio.NewWriter(conn)
-	reader := bufio.NewReader(conn)
-
-	// Send welcome message to the new connection
-	WriteToClient("Welcome to TCP-Chat!", writer, true)
-	WriteToClient(linuxLogo()+"\r\n[ENTER YOUR NAME]: ", writer, false)
-	writer.Flush()
-
-	// exit at close of shutdown
-	go func() {
-		<-shutdown
-		conn.Write([]byte("Server shutting down\n"))
-		conn.Close()
-	}()
-
-	client, name, open := getClientName(reader, writer)
-
-	// Proceed normally if connection didn't close while getting name
-	if open {
-		sendHistory(writer)
-		broadcast(name + " has joined the chat...")
-		listenForMessages(client, name, reader, writer)
-	}
-
-	// Handle client disconnection
-	clientMutex.Lock()
-	delete(clients, client)
-	clientMutex.Unlock()
-	broadcast(fmt.Sprintf("%s has left the chat...", name))
-	wg.Done()
+	oldName := client.Name
+	client.Name = newName
+	broadcastMessage(fmt.Sprintf("%s has changed their name to %s", oldName, newName))
 }
