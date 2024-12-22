@@ -31,11 +31,15 @@ func HandleClientConnection(conn net.Conn) {
 		return
 	}
 	activeclientMutex.Unlock()
+
+	var client *Client
 	defer func() {
 		activeclientMutex.Lock()
 		deleteClientByConn(conn)
 		activeclientMutex.Unlock()
 		conn.Close()
+		broadcastMessage(fmt.Sprintf("%s has left the chat...", client.Name))
+
 		log.Println("Client disconnected")
 	}()
 
