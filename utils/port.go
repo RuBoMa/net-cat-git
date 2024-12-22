@@ -7,6 +7,8 @@ import (
 
 const defaultPort = "8989"
 
+// GetPort checks if a port is provided as a command-line argument.
+// If no argument is provided, it returns the default port.
 func GetPort() string {
 	port := defaultPort
 	if len(os.Args) == 2 {

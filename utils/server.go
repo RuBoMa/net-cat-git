@@ -11,47 +11,49 @@ import (
 )
 
 var (
-	messageHistory []string
-	historyMutex   sync.RWMutex
-	clients        = make(map[*Client]bool)
-	clientMutex    sync.Mutex
-	maxConnections = 10
+	chatHistory       []string
+	chatHistoryMutex  sync.RWMutex
+	activeclients     = make(map[*Client]bool)
+	activeclientMutex sync.Mutex
+	maxConnections    = 10
 )
 
+// HandleClientConnection handles the communication between the server and the connected client.
+// It manages the connection, handles client messages, and sends message history.
 func HandleClientConnection(conn net.Conn) {
-	clientMutex.Lock()
-	if len(clients) >= maxConnections {
-		// Reject the connection if max clients are reached
-		log.Println("Connection limit reached. Rejecting client:", conn.RemoteAddr())
+	activeclientMutex.Lock()
+	if len(activeclients) >= maxConnections {
+		// Reject the connection if max activeclients are reached
+		log.Println("Connection limit reached. Rejecting client")
 		conn.Write([]byte("Server is full. Try again later.\n"))
 		conn.Close()
-		clientMutex.Unlock()
+		activeclientMutex.Unlock()
 		return
 	}
-	clientMutex.Unlock()
+	activeclientMutex.Unlock()
 	defer func() {
-		clientMutex.Lock()
+		activeclientMutex.Lock()
 		deleteClientByConn(conn)
-		clientMutex.Unlock()
+		activeclientMutex.Unlock()
 		conn.Close()
 		log.Println("Client disconnected")
 	}()
 
-	writer := bufio.NewWriter(conn)
-	reader := bufio.NewReader(conn)
+	connWriter := bufio.NewWriter(conn)
+	connReader := bufio.NewReader(conn)
 
-	client, err := getClientName(reader, writer, conn)
+	client, err := getClientName(connReader, connWriter, conn)
 	if err != nil {
 		log.Println("Error getting client name:", err)
 		return
 	}
 	// send message history to the new client
-	sendHistory(writer)
+	sendHistory(connWriter)
 	// Announce that the client has joined
 	broadcastMessage(fmt.Sprintf("%s has joined the chat...", client.Name))
 
 	for {
-		message, err := reader.ReadString('\n')
+		message, err := connReader.ReadString('\n')
 		if err != nil {
 			log.Println("Error reading from client:", err)
 			return
@@ -71,9 +73,9 @@ func HandleClientConnection(conn net.Conn) {
 			timestamp := time.Now().Format("2006-01-02 15:04:05")
 			formattedMessage := fmt.Sprintf("[%s][%s]: %s", timestamp, client.Name, message)
 
-			historyMutex.Lock()
-			messageHistory = append(messageHistory, formattedMessage)
-			historyMutex.Unlock()
+			chatHistoryMutex.Lock()
+			chatHistory = append(chatHistory, formattedMessage)
+			chatHistoryMutex.Unlock()
 
 			log.Println("Message recieved:", formattedMessage)
 
@@ -81,35 +83,40 @@ func HandleClientConnection(conn net.Conn) {
 		}
 	}
 }
-func broadcastMessage(message string) {
-	clientMutex.Lock()
-	defer clientMutex.Unlock()
 
-	for client := range clients {
+// broadcastMessage sends the provided message to all connected clients.
+func broadcastMessage(message string) {
+	activeclientMutex.Lock()
+	defer activeclientMutex.Unlock()
+
+	for client := range activeclients {
 		_, err := client.Writer.WriteString(message + "\n")
 		if err != nil {
 			log.Println("Error sending message to clinet:", err)
 			client.Conn.Close()
-			delete(clients, client)
+			delete(activeclients, client)
 		}
 		client.Writer.Flush()
 	}
 }
 
+// sendHistory sends the entire chat history to the specified writer (client).
 func sendHistory(writer *bufio.Writer) {
-	historyMutex.RLock()
-	defer historyMutex.RUnlock()
+	chatHistoryMutex.RLock()
+	defer chatHistoryMutex.RUnlock()
 
-	for _, msg := range messageHistory {
+	for _, msg := range chatHistory {
 		writer.Write([]byte(msg + "\n"))
 	}
 	writer.Flush()
 }
 
+// deleteClientByConn removes a client from the activeClients map based on their connection.
+// It is called when a client disconnects.
 func deleteClientByConn(conn net.Conn) {
-	for client := range clients {
+	for client := range activeclients {
 		if client.Conn == conn {
-			delete(clients, client)
+			delete(activeclients, client)
 			return
 		}
 	}
