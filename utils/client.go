@@ -20,6 +20,7 @@ var (
 	clients       = make(map[*Client]bool)
 )
 
+// clientNameExists checks if a name is already in use by another client.
 func clientNameExists(name string) bool {
 	for client := range clients {
 		if client.Name == name {
@@ -29,6 +30,7 @@ func clientNameExists(name string) bool {
 	return false
 }
 
+// getClientName validates and retrieves a unique name for the new client.
 func getClientName(reader *bufio.Reader, writer *bufio.Writer) (*Client, string, bool) {
 	var client *Client
 	var name string
@@ -43,12 +45,13 @@ func getClientName(reader *bufio.Reader, writer *bufio.Writer) (*Client, string,
 			break
 		}
 
+		// Ensure the name is not empty.
 		if name == "" {
 			WriteToClient("Invalid name.\r\n[ENTER YOUR NAME]: ", writer, false)
 			writer.Flush()
 		}
 
-		// Add client to the map if possible
+		// Add the client to the map if the name is unique and the chat room is not full.
 		clientMutex.Lock()
 
 		if clientNameExists(name) {
@@ -74,8 +77,9 @@ func getClientName(reader *bufio.Reader, writer *bufio.Writer) (*Client, string,
 	return client, name, open
 }
 
+// HandleClient manages a single client connection and processes their messages.
 func HandleClient(conn net.Conn, shutdown chan struct{}, wg *sync.WaitGroup) {
-	defer conn.Close()
+	defer conn.Close() // Ensure the connection is closed when the function exits.
 	writer := bufio.NewWriter(conn)
 	reader := bufio.NewReader(conn)
 
@@ -84,23 +88,22 @@ func HandleClient(conn net.Conn, shutdown chan struct{}, wg *sync.WaitGroup) {
 	WriteToClient(linuxLogo()+"\r\n[ENTER YOUR NAME]: ", writer, false)
 	writer.Flush()
 
-	// exit at close of shutdown
+	// Gracefully handle server shutdown for the client.
 	go func() {
 		<-shutdown
 		conn.Write([]byte("Server shutting down\n"))
 		conn.Close()
 	}()
 
+	// Get the client's name and ensure the connection remains open.
 	client, name, open := getClientName(reader, writer)
-
-	// Proceed normally if connection didn't close while getting name
 	if open {
 		sendHistory(writer)
 		broadcast(name + " has joined the chat...")
 		listenForMessages(client, name, reader, writer)
 	}
 
-	// Handle client disconnection
+	// Handle client disconnection by removing them from the client map and broadcasting their departure.
 	clientMutex.Lock()
 	delete(clients, client)
 	clientMutex.Unlock()

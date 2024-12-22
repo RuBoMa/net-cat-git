@@ -17,23 +17,24 @@ func sendHistory(writer *bufio.Writer) {
 	writer.Flush()
 }
 
+// listenForMessages listens for incoming messages from a client, processes the messages, and broadcasts them as necessary.
 func listenForMessages(client *Client, name string, reader *bufio.Reader, writer *bufio.Writer) {
-	// Listen for messages
 	for {
+		// Read a message from the client until a newline character is encountered.
 		msg, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Println("Client "+`"`+name+`"`+" exiting?", err)
 			break
 		}
 
-		//	Removing characters when clients inputs backspace and cleaning leading and trailing whitespaces
+		// Remove unwanted characters and trim whitespaces from the message.
 		msg = cleanMessage(msg)
-
+		// Skip empty messages.
 		if msg == "" {
 			continue
 		}
-
-		if len(msg) > 4 && msg[:5] == "name=" { // change name if message starts thus
+		// Check if the message starts with "name=" to handle name changes.
+		if len(msg) > 4 && msg[:5] == "name=" {
 			newName := strings.TrimSpace(msg[5:])
 			if newName == "" || clientNameExists(newName) {
 				if newName == "" {
@@ -43,7 +44,7 @@ func listenForMessages(client *Client, name string, reader *bufio.Reader, writer
 				}
 				writer.Flush()
 			}
-
+			// Broadcast the name change to all clients.
 			broadcast(fmt.Sprintf("%s has changed their name to %s", name, newName))
 			name = newName
 			clientMutex.Lock()
@@ -51,14 +52,14 @@ func listenForMessages(client *Client, name string, reader *bufio.Reader, writer
 			clientMutex.Unlock()
 			continue
 		}
-
+		// Handle client exit commands.
 		if strings.ToLower(msg) == "exit" || strings.ToLower(msg) == "quit" {
 			fmt.Println("Client exiting")
 			WriteToClient("Exiting chat room.", writer, true)
 			writer.Flush()
 			break
 		}
-
+		// Format the message with a timestamp and broadcast it.
 		timestamp := time.Now().Format("2006-01-02 15:04:05")
 		formattedMsg := fmt.Sprintf("[%s][%s]: %s", timestamp, name, msg)
 		broadcast(formattedMsg)

@@ -10,10 +10,11 @@ import (
 func main() {
 	port := utils.GetPort()
 
-	shutdown := make(chan struct{}) // Only thing ever sent is the closing of the channel
+	shutdown := make(chan struct{}) // Used to signal server shutdown.
 	var wg sync.WaitGroup
 
-	listener, err := net.Listen("tcp", ":"+port) // Listening on TCP network
+	// Start listening for incoming TCP connections.
+	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		fmt.Printf("Error starting server: %v\n", err)
 		return
@@ -22,11 +23,11 @@ func main() {
 	fmt.Printf("Listening on the port :%s\n", port)
 	fmt.Println("Press Ctrl+C to shutdown the server")
 
-	// Start message broadcaster
+	// Start goroutines for broadcasting messages and accepting connections.
 	go utils.BroadcastMessages()
 	go utils.AcceptConnections(shutdown, listener, &wg)
 
-	<-shutdown
+	<-shutdown // Block until a shutdown signal is received.
 
-	wg.Wait()
+	wg.Wait() // Wait for all client handlers to finish.
 }
