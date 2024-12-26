@@ -55,9 +55,8 @@ func HandleClientConnection(conn net.Conn) {
 	sendHistory(connWriter)
 
 	joinMessage := fmt.Sprintf("%s has joined the chat...", client.Name)
-	chatHistoryMutex.Lock()
-	chatHistory = append(chatHistory, joinMessage)
-	chatHistoryMutex.Unlock()
+
+	storedChat(joinMessage)
 	// Announce that the client has joined
 	broadcastMessage(joinMessage)
 
@@ -82,12 +81,7 @@ func HandleClientConnection(conn net.Conn) {
 			timestamp := time.Now().Format("2006-01-02 15:04:05")
 			formattedMessage := fmt.Sprintf("[%s][%s]: %s", timestamp, client.Name, message)
 
-			chatHistoryMutex.Lock()
-			chatHistory = append(chatHistory, formattedMessage)
-			chatHistoryMutex.Unlock()
-
-			log.Println("Message recieved:", formattedMessage)
-
+			storedChat(formattedMessage)
 			broadcastMessage(formattedMessage)
 		}
 	}
@@ -109,7 +103,13 @@ func broadcastMessage(message string) {
 	}
 }
 
-// func chatHistory() {}
+func storedChat(message string) {
+	chatHistoryMutex.Lock()
+	chatHistory = append(chatHistory, message)
+	chatHistoryMutex.Unlock()
+
+	log.Println("Message recieved:", message)
+}
 
 // sendHistory sends the entire chat history to the specified writer (client).
 func sendHistory(writer *bufio.Writer) {
