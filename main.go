@@ -10,7 +10,7 @@ func main() {
 	port := utils.GetPort()
 	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		log.Fatalln("coulden't listen to network")
+		log.Fatalln("Couldn't listen to network")
 	}
 	defer listener.Close()
 
