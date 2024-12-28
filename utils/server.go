@@ -11,8 +11,6 @@ import (
 )
 
 var (
-	chatHistory       []string
-	chatHistoryMutex  sync.RWMutex
 	activeclients     = make(map[*Client]bool)
 	activeclientMutex sync.Mutex
 	maxConnections    = 10
@@ -51,13 +49,12 @@ func HandleClientConnection(conn net.Conn) {
 		log.Println("Error getting client name:", err)
 		return
 	}
-	// send message history to the new client
+
 	sendHistory(connWriter)
 
 	joinMessage := fmt.Sprintf("%s has joined the chat...", client.Name)
 
-	storedChat(joinMessage)
-	// Announce that the client has joined
+	StoreChat(joinMessage)
 	broadcastMessage(joinMessage)
 
 	for {
@@ -72,7 +69,6 @@ func HandleClientConnection(conn net.Conn) {
 		}
 
 		if strings.HasPrefix(message, "name=") {
-			// Handle name change
 			newName := strings.TrimSpace(strings.TrimPrefix(message, "name="))
 			HandleNameChange(client, newName)
 		} else {
@@ -81,7 +77,7 @@ func HandleClientConnection(conn net.Conn) {
 			timestamp := time.Now().Format("2006-01-02 15:04:05")
 			formattedMessage := fmt.Sprintf("[%s][%s]: %s", timestamp, client.Name, message)
 
-			storedChat(formattedMessage)
+			StoreChat(formattedMessage)
 			broadcastMessage(formattedMessage)
 		}
 	}
@@ -101,14 +97,6 @@ func broadcastMessage(message string) {
 		}
 		client.Writer.Flush()
 	}
-}
-
-func storedChat(message string) {
-	chatHistoryMutex.Lock()
-	chatHistory = append(chatHistory, message)
-	chatHistoryMutex.Unlock()
-
-	log.Println("Message recieved:", message)
 }
 
 // sendHistory sends the entire chat history to the specified writer (client).

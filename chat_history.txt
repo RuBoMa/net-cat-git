@@ -1,0 +1,12 @@
+Test message
+Al has joined the chat...
+Be has joined the chat...
+[2024-12-28 14:28:31][Be]: Hi Al
+[2024-12-28 14:28:39][Al]: Hi Be
+[2024-12-28 14:29:01][Al]: bye Be
+[2024-12-28 14:29:08][Al]: Boijsd
+[2024-12-28 14:29:09][Al]: oajsd
+[2024-12-28 14:29:10][Al]: oajsd
+[2024-12-28 14:29:12][Al]: åhasddaddsa
+[2024-12-28 14:29:14][Be]: asdad
+[2024-12-28 14:29:16][Be]: aasd
