@@ -25,5 +25,4 @@ func main() {
 		log.Println("New client connected")
 		go utils.HandleClientConnection(conn)
 	}
-
 }

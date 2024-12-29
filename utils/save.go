@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"sync"
-	"time"
 )
 
 var (
@@ -14,7 +13,7 @@ var (
 )
 
 // StoreChat stores a single message in memory and appends it to a file.
-func StoreChat(message string, fileName ...string) {
+func StoreChat(message string, fileName ...string) error {
 	// Determine file name to use
 	targetFile := defaultFileName
 	if len(fileName) > 0 && fileName[0] != "" {
@@ -32,44 +31,14 @@ func StoreChat(message string, fileName ...string) {
 	file, err := os.OpenFile(targetFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println("Error writing to chat history file:", err)
-		return
+		return err
 	}
 	defer file.Close()
 
 	_, err = file.WriteString(message + "\n")
 	if err != nil {
 		log.Println("Error writing message to file:", err)
+		return err
 	}
-}
-
-// SaveHistoryToFile writes the entire in-memory chat history to a file.
-func SaveHistoryToFile(fileName string) {
-	file, err := os.Create("chat_history.txt")
-	if err != nil {
-		log.Println("Error creating chat history file:", err)
-		return
-	}
-	defer file.Close()
-
-	chatHistoryMutex.RLock()
-	defer chatHistoryMutex.RUnlock()
-
-	for _, message := range chatHistory {
-		_, err := file.WriteString(message + "\n")
-		if err != nil {
-			log.Println("Error writing message to file:", err)
-		}
-	}
-
-	log.Println("Chat history saved to chat_history.txt")
-}
-
-// StartPeriodicSaving periodically saves the chat history to a file in a separate goroutine.
-func StartPeriodicSaving(interval time.Duration, fileName string) {
-	go func() {
-		for {
-			time.Sleep(interval)
-			SaveHistoryToFile(fileName)
-		}
-	}()
+	return nil
 }

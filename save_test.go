@@ -58,28 +58,28 @@ func TestStoreChat(t *testing.T) {
 	}
 }
 
-func TestSaveHistoryToFile(t *testing.T) {
-	// Setup test
-	fileName, cleanup := setupTest()
-	defer cleanup()
+// func TestSaveHistoryToFile(t *testing.T) {
+// 	// Setup test
+// 	fileName, cleanup := setupTest()
+// 	defer cleanup()
 
-	// Add messages to memory
-	messages := []string{"Message 1", "Message 2", "Message 3"}
-	chatHistoryMutex.Lock()
-	chatHistory = append(chatHistory, messages...)
-	chatHistoryMutex.Unlock()
+// 	// Add messages to memory
+// 	messages := []string{"Message 1", "Message 2", "Message 3"}
+// 	chatHistoryMutex.Lock()
+// 	chatHistory = append(chatHistory, messages...)
+// 	chatHistoryMutex.Unlock()
 
-	// Call SaveHistoryToFile
-	utils.SaveHistoryToFile(fileName)
+// 	// Call SaveHistoryToFile
+// 	utils.SaveHistoryToFile(fileName)
 
-	// Verify all messages are written to the file
-	data, err := os.ReadFile(fileName)
-	if err != nil {
-		t.Fatalf("Failed to read chat history file: %v", err)
-	}
-	for _, msg := range messages {
-		if !strings.Contains(string(data), msg) {
-			t.Errorf("Expected message %q in chat history file, got %q", msg, string(data))
-		}
-	}
-}
+// 	// Verify all messages are written to the file
+// 	data, err := os.ReadFile(fileName)
+// 	if err != nil {
+// 		t.Fatalf("Failed to read chat history file: %v", err)
+// 	}
+// 	for _, msg := range messages {
+// 		if !strings.Contains(string(data), msg) {
+// 			t.Errorf("Expected message %q in chat history file, got %q", msg, string(data))
+// 		}
+// 	}
+// }

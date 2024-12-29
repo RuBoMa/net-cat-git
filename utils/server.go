@@ -36,7 +36,13 @@ func HandleClientConnection(conn net.Conn) {
 		deleteClientByConn(conn)
 		activeclientMutex.Unlock()
 		conn.Close()
-		broadcastMessage(fmt.Sprintf("%s has left the chat...", client.Name))
+
+		leftMessage := fmt.Sprintf("%s has left the chat...", client.Name)
+
+		if err := StoreChat(leftMessage); err != nil {
+			log.Printf("Failed to store left message for %s: %v", client.Name, err)
+		}
+		broadcastMessage(leftMessage, client)
 
 		log.Println("Client disconnected")
 	}()
@@ -54,8 +60,10 @@ func HandleClientConnection(conn net.Conn) {
 
 	joinMessage := fmt.Sprintf("%s has joined the chat...", client.Name)
 
-	StoreChat(joinMessage)
-	broadcastMessage(joinMessage)
+	if err := StoreChat(joinMessage); err != nil {
+		log.Printf("Failed to store join message for %s: %v", client.Name, err)
+	}
+	broadcastMessage(joinMessage, client)
 
 	for {
 		message, err := connReader.ReadString('\n')
@@ -77,18 +85,23 @@ func HandleClientConnection(conn net.Conn) {
 			timestamp := time.Now().Format("2006-01-02 15:04:05")
 			formattedMessage := fmt.Sprintf("[%s][%s]: %s", timestamp, client.Name, message)
 
-			StoreChat(formattedMessage)
-			broadcastMessage(formattedMessage)
+			if err := StoreChat(formattedMessage); err != nil {
+				log.Printf("Failed to store formatted message for %s: %v", client.Name, err)
+			}
+			broadcastMessage(formattedMessage, client)
 		}
 	}
 }
 
 // broadcastMessage sends the provided message to all connected clients.
-func broadcastMessage(message string) {
+func broadcastMessage(message string, sender *Client) {
 	activeclientMutex.Lock()
 	defer activeclientMutex.Unlock()
 
 	for client := range activeclients {
+		if client == sender {
+			continue
+		}
 		_, err := client.Writer.WriteString(message + "\n")
 		if err != nil {
 			log.Println("Error sending message to clinet:", err)
