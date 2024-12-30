@@ -83,4 +83,4 @@ Follows Go best practices for code structure and error handling.
 
 # Authors
 
-Roope & Toft
+Roope, Toft & Fanni
