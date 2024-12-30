@@ -10,7 +10,7 @@ func main() {
 	port := utils.GetPort()
 	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		log.Fatalln("Couldn't listen to network")
+		log.Fatalln("Couldn't listen to network:", err) // adding error to logging
 	}
 	defer listener.Close()
 
@@ -19,7 +19,8 @@ func main() {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Fatalln("err while accept", err)
+			log.Println("Error while accepting connection:", err) //no fatal error when one connection fails
+			continue
 		}
 
 		log.Println("New client connected")

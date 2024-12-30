@@ -21,7 +21,7 @@ var (
 func HandleClientConnection(conn net.Conn) {
 	activeclientMutex.Lock()
 	if len(activeclients) >= maxConnections {
-		// Reject the connection if max activeclients are reached
+		// Reject the connection if max active clients are reached
 		log.Println("Connection limit reached. Rejecting client")
 		conn.Write([]byte("Server is full. Try again later.\n"))
 		conn.Close()
@@ -44,7 +44,7 @@ func HandleClientConnection(conn net.Conn) {
 		}
 		broadcastMessage(leftMessage, client)
 
-		log.Println("Client disconnected")
+		log.Printf("%v disconnected\n", client.Name) // logging who left
 	}()
 
 	connWriter := bufio.NewWriter(conn)
@@ -104,7 +104,7 @@ func broadcastMessage(message string, sender *Client) {
 		}
 		_, err := client.Writer.WriteString(message + "\n")
 		if err != nil {
-			log.Println("Error sending message to clinet:", err)
+			log.Println("Error broadcasting message to clients:", err) //updated error message
 			client.Conn.Close()
 			delete(activeclients, client)
 		}

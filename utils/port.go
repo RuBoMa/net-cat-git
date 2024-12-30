@@ -14,7 +14,7 @@ func GetPort() string {
 	if len(os.Args) == 2 {
 		port = os.Args[1]
 	} else if len(os.Args) > 2 {
-		fmt.Println("[USAGE]: ./TCPChat $port")
+		fmt.Println("[USAGE]: ./TCPChat $port") //not accurate when running the program first time
 		os.Exit(1)
 	}
 	return port
