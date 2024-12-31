@@ -77,7 +77,7 @@ func HandleClientConnection(conn net.Conn) {
 		}
 
 		if strings.HasPrefix(message, "name=") {
-			newName := strings.TrimSpace(strings.TrimPrefix(message, "name="))
+			newName := strings.TrimSpace(strings.TrimPrefix(message, "name=")) // Is this in the README or are there instructions for the user?
 			HandleNameChange(client, newName)
 		} else {
 
@@ -104,7 +104,7 @@ func broadcastMessage(message string, sender *Client) {
 		}
 		_, err := client.Writer.WriteString(message + "\n")
 		if err != nil {
-			log.Println("Error broadcasting message to clients:", err) //updated error message
+			log.Println("Error broadcasting message to client:", err) //updated error message
 			client.Conn.Close()
 			delete(activeclients, client)
 		}
