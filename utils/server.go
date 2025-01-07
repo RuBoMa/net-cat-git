@@ -37,7 +37,8 @@ func HandleClientConnection(conn net.Conn) {
 		activeclientMutex.Unlock()
 		conn.Close()
 
-		leftMessage := fmt.Sprintf("%s has left the chat...", client.Name)
+		//leftMessage := fmt.Sprintf("%s has left the chat...", client.Name)
+		leftMessage := client.Name + " has left the chat..."
 
 		if err := StoreChat(leftMessage); err != nil {
 			log.Printf("Failed to store left message for %s: %v", client.Name, err)

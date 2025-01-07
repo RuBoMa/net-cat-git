@@ -17,8 +17,10 @@ type Client struct {
 // It returns a Client object with the provided name and connection details.
 func getClientName(reader *bufio.Reader, writer *bufio.Writer, conn net.Conn) (*Client, error) {
 	var name string
+	writer.WriteString(LinuxLogo() + "\n")
+	writer.Flush()
 	for {
-		writer.WriteString(LinuxLogo() + "\n[ENTER YOUR NAME:] ")
+		writer.WriteString("[ENTER YOUR NAME:] ")
 		writer.Flush()
 
 		nameInput, err := reader.ReadString('\n')
