@@ -22,7 +22,7 @@ func StoreChat(message string) error {
 	chatHistory = append(chatHistory, message)
 
 	// Writing the message to the chat history file
-	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println("Error opening chat history file:", err)
 		return err
@@ -47,6 +47,7 @@ func InitializeLog() {
 	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println("Error creating a chat history file:", err)
+		filePath = "logs/chat_history.txt"
 	}
 	defer file.Close()
 }
