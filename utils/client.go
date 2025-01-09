@@ -76,5 +76,5 @@ func HandleNameChange(client *Client, newName string) {
 	client.Name = newName
 
 	newNameMessage := fmt.Sprintf("%s has changed their name to %s", oldName, newName)
-	broadcastMessage(newNameMessage, client)
+	broadcastMessage(newNameMessage)
 }

@@ -43,7 +43,7 @@ func HandleClientConnection(conn net.Conn) {
 		if err := StoreChat(leftMessage); err != nil {
 			log.Printf("Failed to store left message for %s: %v", client.Name, err)
 		}
-		broadcastMessage(leftMessage, client)
+		broadcastMessage(leftMessage)
 
 		log.Printf("%v disconnected\n", client.Name) // logging who left
 	}()
@@ -64,7 +64,7 @@ func HandleClientConnection(conn net.Conn) {
 	if err := StoreChat(joinMessage); err != nil {
 		log.Printf("Failed to store join message for %s: %v", client.Name, err)
 	}
-	broadcastMessage(joinMessage, client)
+	broadcastMessage(joinMessage)
 
 	for {
 		message, err := connReader.ReadString('\n')
@@ -72,6 +72,7 @@ func HandleClientConnection(conn net.Conn) {
 			log.Println("Error reading from client:", err)
 			return
 		}
+		client.Conn.Write([]byte("\r\033[1A\033[2K"))  // 
 		message = strings.TrimSpace(message)
 		if message == "" {
 			continue
@@ -89,20 +90,17 @@ func HandleClientConnection(conn net.Conn) {
 			if err := StoreChat(formattedMessage); err != nil {
 				log.Printf("Failed to store formatted message for %s: %v", client.Name, err)
 			}
-			broadcastMessage(formattedMessage, client)
+			broadcastMessage(formattedMessage)
 		}
 	}
 }
 
 // broadcastMessage sends the provided message to all connected clients.
-func broadcastMessage(message string, sender *Client) {
+func broadcastMessage(message string) {
 	activeclientMutex.Lock()
 	defer activeclientMutex.Unlock()
 
 	for client := range activeclients {
-		if client == sender {
-			continue
-		}
 		_, err := client.Writer.WriteString(message + "\n")
 		if err != nil {
 			log.Println("Error broadcasting message to client:", err) //updated error message
